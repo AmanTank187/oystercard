@@ -1,6 +1,8 @@
 require 'oystercard'
 
 describe Oystercard do
+  let(:entry_station) { double :station }
+  let(:exit_station) { double :station }
   shared_context 'fully topped up oystercard' do
     before do
       @balance_limit = Oystercard::BALANCE_LIMIT
@@ -38,13 +40,6 @@ describe Oystercard do
     end
   end
 
-  describe '#deduct' do
-    it 'should deduct amount from balance' do
-      subject.top_up(20)
-      expect { subject.deduct(5) }.to change { subject.balance }.by(-5)
-    end
-  end
-
   describe '#in_journey?' do
     it 'is initially not in a journey' do
       expect(subject).not_to be_in_journey
@@ -54,7 +49,6 @@ describe Oystercard do
   describe '#touch_in' do
     include_context 'fully topped up oystercard'
     include_context 'oystercard already in journey'
-    let(:entry_station) { double :station }
     it 'can touch in' do
       subject.touch_in(entry_station)
       expect(subject).to be_in_journey
@@ -62,7 +56,6 @@ describe Oystercard do
   end
 
   describe '#touch_in' do
-    let(:entry_station) { double :station }
     it 'Cant be used if it doesnt have atleast £1' do
       expect { subject.touch_in(entry_station) }.to raise_error 'Have insufficient funds'
     end
@@ -79,8 +72,6 @@ describe Oystercard do
   end
 
   describe '#touch_out' do
-    let(:entry_station) { double :station }
-    let(:exit_station) { double :station }
     it 'can touch out' do
       subject.top_up(50)
       subject.touch_in(entry_station)
@@ -105,7 +96,6 @@ describe Oystercard do
   end
 
   describe '#entry_station' do
-    let(:entry_station) { double :station }
     it 'stores the entry station' do
       subject.top_up(10)
       subject.touch_in(entry_station)
@@ -113,13 +103,26 @@ describe Oystercard do
     end
   end
 
-  describe '#method' do
-    let(:journey){ {entry_station: entry_station, exit_station: exit_station} }
-    it 'stores a journey' do
+  describe '#journeys' do
+    it 'it has an empty list of journeys by defualt' do
+      expect(subject.journeys).to be_empty
+    end
+    let(:journey){ {"entry_station" => entry_station,"exit_station" => exit_station} }
+    it 'It stores the current_journey' do
+      subject.top_up(20)
       subject.touch_in(entry_station)
       subject.touch_out(exit_station)
-      expect(subject.journeys).to include journey
+      expect(subject.current_journey).to eq journey
     end
+
+    it 'It stores the current_journey in journey array' do
+      subject.top_up(20)
+      subject.touch_in(entry_station)
+      subject.touch_out(exit_station)
+      expect(subject.journeys).to include subject.current_journey
+    end
+
+
   end
 
 end
